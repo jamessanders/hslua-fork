@@ -186,8 +186,6 @@ import Data.IORef
 import qualified Foreign.Storable as F
 import qualified Data.List as L
 import Data.Maybe
-import qualified Control.Concurrent as CC
-import Control.Concurrent.MVar
 
 -- | Wrapper for @lua_State *@. See @lua_State@ in Lua Reference Manual.
 newtype LuaState = LuaState (Ptr ())
@@ -346,7 +344,7 @@ foreign import ccall "lua.h lua_call" c_lua_call :: LuaState -> CInt -> CInt -> 
 foreign import ccall "lua.h lua_pcall" c_lua_pcall :: LuaState -> CInt -> CInt -> CInt -> IO CInt
 foreign import ccall "lua.h lua_cpcall" c_lua_cpcall :: LuaState -> FunPtr LuaCFunction -> Ptr a -> IO CInt
 
-foreign import ccall unsafe "lua.h lua_load" c_lua_load :: LuaState -> FunPtr LuaReader -> Ptr () -> Ptr CChar -> IO CInt
+foreign import ccall "lua.h lua_load" c_lua_load :: LuaState -> FunPtr LuaReader -> Ptr () -> Ptr CChar -> IO CInt
 
 foreign import ccall "lua.h lua_dump" c_lua_dump :: LuaState -> FunPtr LuaWriter -> Ptr () -> IO ()
 
@@ -637,9 +635,7 @@ lessthan l i j = liftM (/=0) (c_lua_lessthan l (fromIntegral i) (fromIntegral j)
 
 -- | See @luaL_loadfile@ in Lua Reference Manual.
 loadfile :: LuaState -> String -> IO Int
-loadfile l f = do
-  src <- readFile f 
-  src `seq` loadstring l src f 
+loadfile l f = readFile f >>= \c -> loadstring l c f
 
 
 foreign import ccall "wrapper" mkStringReader :: LuaReader -> IO (FunPtr LuaReader)
@@ -647,23 +643,22 @@ foreign import ccall "wrapper" mkStringReader :: LuaReader -> IO (FunPtr LuaRead
 -- | See @luaL_loadstring@ in Lua Reference Manual.
 loadstring :: LuaState -> String -> String -> IO Int
 loadstring l script cn = do
-    w <- newMVar nullPtr
+    w <- newIORef nullPtr
     let rd :: LuaReader
         rd l d ps = do
-               k <- readMVar w
+               k <- readIORef w
                if k==nullPtr
                    then do
                        (k,l) <- newCStringLen script
-                       modifyMVar_ w (const (return k))
-                       F.poke ps (fromIntegral l) >>= print
+                       writeIORef w k
+                       F.poke ps (fromIntegral l)
                        return k
                    else do
                        return nullPtr
     writer <- mkStringReader rd
-    res <- withCString cn $ \cn -> do
-      c_lua_load l writer nullPtr cn
+    res <- withCString cn $ \cn -> c_lua_load l writer nullPtr cn
     freeHaskellFunPtr writer
-    k <- readMVar w
+    k <- readIORef w
     free k
     return (fromIntegral res)
 
