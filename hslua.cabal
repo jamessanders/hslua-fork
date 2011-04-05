@@ -17,7 +17,7 @@ Description:
         The package is standalone: full Lua interpreter version 5.1.4 
         is distributed in this package as well.
 Category: Scripting
-Build-depends: base==4.*
+Build-depends: base==4.*, bytestring >= 0.9.1.10
 Hs-source-dirs: src
 C-sources: src/lapi.c, src/lauxlib.c, src/lbaselib.c, src/lcode.c, src/ldblib.c,
            src/ldebug.c, src/ldo.c, src/ldump.c, src/lfunc.c, src/lgc.c,
