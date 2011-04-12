@@ -188,6 +188,7 @@ import qualified Data.List as L
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import Data.ByteString.Internal (c2w,w2c)
+
 import Data.Maybe
 
 -- | Wrapper for @lua_State *@. See @lua_State@ in Lua Reference Manual.
@@ -490,7 +491,11 @@ atpanic = c_lua_atpanic
 
 -- | See @lua_tostring@ in Lua Reference Manual.
 tostring :: LuaState -> Int -> IO ByteString
-tostring l n = c_lua_tolstring l (fromIntegral n) nullPtr >>= BS.packCString
+tostring l n = alloca $ \lptr -> do
+  cstr <- c_lua_tolstring l (fromIntegral n) lptr
+  rlen <- F.peek lptr
+  print ("RLEN: " ++ show rlen)
+  BS.packCStringLen (cstr, fromIntegral rlen)
 
 -- | See @lua_tothread@ in Lua Reference Manual.
 tothread :: LuaState -> Int -> IO LuaState
@@ -699,7 +704,14 @@ pushnumber = c_lua_pushnumber
 
 -- | See @lua_pushstring@ in Lua Reference Manual.
 pushstring :: LuaState -> ByteString -> IO ()
-pushstring l s = BS.useAsCStringLen s $ \(s,z) -> c_lua_pushlstring l s (fromIntegral z)
+pushstring l s = BS.useAsCStringLen s $ \(s,z) -> do
+  print $ "STRLEN: " ++ (show z)
+  c_lua_pushlstring l s (fromIntegral z)
+
+-- | See @lua_pushstring@ in Lua Reference Manual.
+pushstring' :: LuaState -> String -> IO ()
+pushstring' l s = withCStringLen s $ \(s,z) -> c_lua_pushlstring l s (fromIntegral z)
+
 
 -- | See @lua_pushthread@ in Lua Reference Manual.
 pushthread :: LuaState -> IO Bool
@@ -864,7 +876,7 @@ toStr = map w2c . BS.unpack
 
 
 instance StackValue String where
-    push l x = pushstring l (fromStr x)
+    push l x = pushstring' l x
     peek l n = maybepeek l n isstring tostring >>= return . fmap toStr
     valuetype _ = TSTRING
 
