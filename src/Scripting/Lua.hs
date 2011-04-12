@@ -494,7 +494,6 @@ tostring :: LuaState -> Int -> IO ByteString
 tostring l n = alloca $ \lptr -> do
   cstr <- c_lua_tolstring l (fromIntegral n) lptr
   rlen <- F.peek lptr
-  print ("RLEN: " ++ show rlen)
   BS.packCStringLen (cstr, fromIntegral rlen)
 
 -- | See @lua_tothread@ in Lua Reference Manual.
@@ -704,9 +703,7 @@ pushnumber = c_lua_pushnumber
 
 -- | See @lua_pushstring@ in Lua Reference Manual.
 pushstring :: LuaState -> ByteString -> IO ()
-pushstring l s = BS.useAsCStringLen s $ \(s,z) -> do
-  print $ "STRLEN: " ++ (show z)
-  c_lua_pushlstring l s (fromIntegral z)
+pushstring l s = BS.useAsCStringLen s $ \(s,z) -> c_lua_pushlstring l s (fromIntegral z)
 
 -- | See @lua_pushstring@ in Lua Reference Manual.
 pushstring' :: LuaState -> String -> IO ()
