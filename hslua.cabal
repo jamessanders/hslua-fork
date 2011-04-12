@@ -1,5 +1,5 @@
-Name: hslua
-Version: 0.3
+Name: hslua-fork
+Version: 0.4
 Stability: beta
 Cabal-version: >= 1.6
 Exposed-modules: Scripting.Lua
@@ -7,7 +7,7 @@ License: BSD3
 Build-type: Simple
 License-File: COPYRIGHT
 Copyright: 2007-2010, Gracjan Polak
-Author: Gracjan Polak <gracjanpolak@gmail.com>
+Author: James Sanders <james.sanders@thisismedium.com>, Gracjan Polak <gracjanpolak@gmail.com>
 Maintainer: Gracjan Polak <gracjanpolak@gmail.com>
 Synopsis: A Lua language interpreter embedding in Haskell
 Description:
@@ -16,6 +16,8 @@ Description:
         .
         The package is standalone: full Lua interpreter version 5.1.4 
         is distributed in this package as well.
+        .       
+        This is a fork of the original hslua library
 Category: Scripting
 Build-depends: base==4.*, bytestring >= 0.9.1.10
 Hs-source-dirs: src
