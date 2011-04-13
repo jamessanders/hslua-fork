@@ -370,6 +370,7 @@ foreign import ccall "lauxlib.h luaL_newmetatable" c_luaL_newmetatable :: LuaSta
 foreign import ccall "lauxlib.h luaL_argerror" c_luaL_argerror :: LuaState -> CInt -> Ptr CChar -> IO CInt
 
 foreign import ccall "lauxlib.h luaL_ref" c_luaL_ref :: LuaState -> CInt -> IO CInt
+foreign import ccall "lauxlib.h luaL_loadfile" c_lua_loadfile :: LuaState -> CString -> IO CInt
 
 foreign import ccall "ntrljmp.h lua_neutralize_longjmp" c_lua_neutralize_longjmp :: LuaState -> IO CInt
 foreign import ccall "ntrljmp.h &lua_neutralize_longjmp" c_lua_neutralize_longjmp_addr :: FunPtr (LuaState -> IO CInt) 
@@ -642,8 +643,11 @@ lessthan l i j = liftM (/=0) (c_lua_lessthan l (fromIntegral i) (fromIntegral j)
 
 -- | See @luaL_loadfile@ in Lua Reference Manual.
 loadfile :: LuaState -> String -> IO Int
-loadfile l f = readFile f >>= \c -> loadstring l c f
+--loadfile l f = readFile f >>= \c -> loadstring l c f
 
+loadfile l f = do
+  i <- withCAString f $ \path -> c_lua_loadfile l path 
+  return $ fromIntegral i
 
 foreign import ccall "wrapper" mkStringReader :: LuaReader -> IO (FunPtr LuaReader)
 
